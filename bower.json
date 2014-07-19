@@ -1,0 +1,29 @@
+{
+  "name": "d3-tacobar",
+  "version": "0.0.1",
+  "homepage": "https://github.com/mattly/d3-tacobar",
+  "authors": [
+    "Matthew Lyon <matthew@lyonheart.us>"
+  ],
+  "description": "Some fixings and toppings for d3.",
+  "main": "src/tacobar.js",
+  "moduleType": [
+    "amd",
+    "globals",
+    "node"
+  ],
+  "keywords": [
+    "d3",
+    "datavis",
+    "data",
+    "visualization"
+  ],
+  "license": "ASLv2",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
