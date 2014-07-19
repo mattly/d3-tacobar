@@ -5,8 +5,7 @@ var fluentAccessor = function(thing, state, property){
   thing[property] = function(value){
     if (value === void 0) { return state[property]; }
     state[property] = value;
-    return thing;
-    }
+    return thing; }
   };
 
 function basicState(){
@@ -40,8 +39,7 @@ var handler = function(select) {
       });
     }
   Object.keys(state).forEach(function(key){ fluentAccessor(handler, state, key); });
-  return handler;
-  }
+  return handler; }
 
 function parseSelection(select) {
   var segments = select.split(/[\.#]/)
@@ -49,8 +47,7 @@ function parseSelection(select) {
     , id, match;
   if (match = select.match(/#([-\w]+)/)) { id = match[1]; }
   var classes = segments.filter(function(s){ return select.match('\\.'+s); })
-  return [ele, id, classes];
-}
+  return [ele, id, classes]; }
 
 var reference = function(name){
   var state = {
@@ -76,16 +73,16 @@ var reference = function(name){
       });
 
   Object.keys(state).forEach(function(key){ fluentAccessor(group, state, key); });
-  return group;
-  }
+  return group; }
 
 var menu = function(name){
-  var state = {options:[], callbacks:[], selected: null}
+  var callbacks=[];
+  var state = {data:[], text: ident, value: ident, selected: null}
 
   var optionHandler = handler('option')
-    .id(function(opt){ return opt.value; })
+    .id(state.value)
     .enter(function(sel){ sel.append('option').attr('value', this.id); })
-    .update(function(options){ options.text(function(opt){ return opt.text; }); });
+    .update(function(options){ options.text(state.text); });
 
   var menu = handler('select.'+name)
     .transform(function(d){ return [d]; })
@@ -93,27 +90,24 @@ var menu = function(name){
       var select = p.append('select').attr('class', name).attr('name',name);
       select.on('change', function(){
         var value = this.value;
-        state.selected = state.options.filter(function(opt){ return opt.value === value; })[0];
-        state.callbacks.forEach(function(cb){ cb.call(state, state.selected); });
+        state.selected = state.data.filter(function(opt){ return state.value(opt) === value; })[0];
+        callbacks.forEach(function(cb){ cb.call(state, state.selected); });
         })
       })
     .update(function(select){
-      select.datum(state.options);
+      select.datum(state.data);
       optionHandler(select);
       })
 
-  menu.selected = function(){ return state.selected }
-  menu.option = function(name, config){
-    if (!config) { config = {} }
-    config.value = name
-    if (!config.text) { config.text = name }
-    state.options.push(config)
-    if (! state.selected) { state.selected = config }
-    return menu
-    }
-  menu.change = function(fn) { state.callbacks.push(fn); return menu }
-  return menu
-  }
+  menu.selected = function(){ return state.selected };
+  ['text','value'].forEach(function(key){ fluentAccessor(menu, state, key); });
+  menu.data = function(data){
+    if (!data) { return state.data; }
+    state.data = data;
+    if (!state.selected) { state.selected = data[0]; }
+    return menu; }
+  menu.change = function(fn) { callbacks.push(fn); return menu }
+  return menu; }
 
 var slider = function(name){
   var callbacks = [];
@@ -155,8 +149,7 @@ var slider = function(name){
   Object.keys(state).forEach(function(prop){ fluentAccessor(slider, state, prop); });
 
   slider.change = function(cb) { callbacks.push(cb); return slider }
-  return slider
-  }
+  return slider }
 
 function toggleable(name, select) {
   var callbacks = []
@@ -177,8 +170,7 @@ function toggleable(name, select) {
     if (_.isFunction(callback)) { callbacks.push(callback) }
     return btn
     }
-  return btn;
-  }
+  return btn; }
 
 var toggle = function(name) {
   return toggleable(name, 'div.switch.'+name)
@@ -193,5 +185,16 @@ var toggle = function(name) {
       container.selectAll('input').property('checked', this.active);
       container.selectAll('span').text(this.text);
       })
-  }
+    }
+
+var button = function(name){
+  var state = {}
+    , btn = toggleable(name, 'button.button.'+name)
+    .enter(function(parent){ parent.append('button').attr('class', 'button '+name).on('click', this.fire); })
+    .update(function(button){
+      var bg = d3.rgb(state.color).darker(this.active ? 1 : 0)
+      button.text(this.text).classed({active: this.active}).style({'background-color': bg});
+      })
+  fluentAccessor(btn, state, 'color');
+  return btn; }
 
