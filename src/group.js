@@ -158,3 +158,40 @@ var slider = function(name){
   return slider
   }
 
+function toggleable(name, select) {
+  var callbacks = []
+    , state = {text: name, active: false, enter: noop, update: noop};
+  state.fire = function(){
+    state.active = ! state.active;
+    callbacks.forEach(function(cb){ cb.call(state, btn); });
+    }
+  var btn = handler(select)
+    .transform(function(d){ return [d]; })
+    .enter(function(sel){ state.enter.call(state, sel); })
+    .update(function(sel){ state.update.call(state, sel); });
+  btn.toggle = function() { state.active = !state.active; return btn; };
+  Object.keys(state).forEach(function(key){ fluentAccessor(btn, state, key); });
+  delete btn.fire;
+
+  btn.click = function(callback) {
+    if (_.isFunction(callback)) { callbacks.push(callback) }
+    return btn
+    }
+  return btn;
+  }
+
+var toggle = function(name) {
+  return toggleable(name, 'div.switch.'+name)
+    .enter(function(parent){
+      var container = parent.append('div').attr('class', 'switch '+name).on('click', this.fire);
+      var label = container.append('div').attr('class', 'label-switch');
+      label.append('input').attr('type', 'checkbox');
+      label.append('div').attr('class', 'checkbox');
+      container.append('span');
+      })
+    .update(function(container){
+      container.selectAll('input').property('checked', this.active);
+      container.selectAll('span').text(this.text);
+      })
+  }
+
