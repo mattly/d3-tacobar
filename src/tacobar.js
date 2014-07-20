@@ -80,40 +80,35 @@
 
   var menu = bar.menu = function(name){
     var callbacks=[];
-    var state = {data:[], text: ident, value: ident, selected: null}
+    var state = {transform: ident, text: ident, value: ident}
 
     var optionHandler = handler('option')
       .enter(function(sel){ sel.append('option'); })
       .update(function(options){ options.text(state.text).attr('value', state.value); });
 
     var menu = handler('select.'+name)
-      .transform(function(d){ return [state.data]; })
+      .transform(function(d){ return [state.transform(d)]; })
       .enter(function(p){
         var select = p.append('select').attr('class', name).attr('name',name);
         select.on('change', function(){
-          var value = this.value;
-          state.selected = state.data.filter(function(opt){ return state.value(opt) === value; })[0];
-          callbacks.forEach(function(cb){ cb.call(state, state.selected); });
+          var value = this.value
+            , data = d3.select(this).datum()
+            , selected = data.filter(function(opt){ return state.value(opt) === value; })[0];
+          callbacks.forEach(function(cb){ cb.call(this, selected); });
           })
         })
       .update(function(select){
         select.call(optionHandler);
-        })
+        });
 
-    menu.selected = function(){ return state.selected };
-    ['text','value'].forEach(function(key){ fluentAccessor(menu, state, key); });
-    menu.data = function(data){
-      if (!data) { return state.data; }
-      state.data = data;
-      if (!state.selected) { state.selected = data[0]; }
-      return menu; }
+    ['text','value','transform'].forEach(function(key){ fluentAccessor(menu, state, key); });
     menu.change = function(fn) { callbacks.push(fn); return menu }
     return menu; }
 
   var slider = bar.slider = function(name){
     var callbacks = [];
     var state = {
-      value: 0
+      value: ident
       , disabled: false
       , fill: '#ddd'
       , width: 100
@@ -123,7 +118,7 @@
       }
 
     var slider = handler('div.'+name)
-      .transform(function(d){ return [state.value] })
+      .transform(function(d){ return [state.value(d)]; })
       .enter(function(parent){
         div = parent.append('div').attr('class', name)
         svg = div.append('svg:svg')
@@ -131,23 +126,24 @@
         svg.call(d3.behavior.drag().on('drag', function(){
           if (state.disabled) { return; }
           var x = d3.mouse(this)[0];
-          state.value = Math.max(0, Math.min(state.width, x)) / state.width;
-          callbacks.forEach(function(cb){ cb(state.value); })
+          var value = Math.max(0, Math.min(state.width, x)) / state.width;
+          callbacks.forEach(function(cb){ cb.call(this, value); });
           }))
-        state.enter(div)
+        state.enter(div);
         })
       .update(function(div){
         div.classed({disabled:state.disabled});
         div.selectAll('svg')
           .attr('width', state.width)
           .attr('height', state.height);
-        div.selectAll('rect')
-          .attr('width', state.value * state.width)
+        div.selectAll('rect').datum(div.datum())
+          .attr('width', function(d){ return d * state.width; })
           .attr('height', state.height)
           .attr('fill', state.fill);
         state.update(div)
         })
     Object.keys(state).forEach(function(prop){ fluentAccessor(slider, state, prop); });
+    delete slider.transform;
 
     slider.change = function(cb) { callbacks.push(cb); return slider }
     return slider }
