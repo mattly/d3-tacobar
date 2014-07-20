@@ -117,6 +117,9 @@
       , update: noop
       }
 
+    var isDisabled = function() {
+      if (typeof state.disabled === 'function'){ return state.disabled(); }
+      return state.disabled; }
     var slider = handler('div.'+name)
       .transform(function(d){ return [state.value(d)]; })
       .enter(function(parent){
@@ -124,7 +127,7 @@
         svg = div.append('svg:svg')
         svg.append('svg:rect').attr('x',0).attr('y',0)
         svg.call(d3.behavior.drag().on('drag', function(){
-          if (state.disabled) { return; }
+          if (isDisabled()) { return; }
           var x = d3.mouse(this)[0];
           var value = Math.max(0, Math.min(state.width, x)) / state.width;
           callbacks.forEach(function(cb){ cb.call(this, value); });
@@ -132,7 +135,7 @@
         state.enter(div);
         })
       .update(function(div){
-        div.classed({disabled:state.disabled});
+        div.classed({disabled: isDisabled()});
         div.selectAll('svg')
           .attr('width', state.width)
           .attr('height', state.height);
