@@ -83,12 +83,11 @@
     var state = {data:[], text: ident, value: ident, selected: null}
 
     var optionHandler = handler('option')
-      .id(state.value)
-      .enter(function(sel){ sel.append('option').attr('value', this.id); })
-      .update(function(options){ options.text(state.text); });
+      .enter(function(sel){ sel.append('option'); })
+      .update(function(options){ options.text(state.text).attr('value', state.value); });
 
     var menu = handler('select.'+name)
-      .transform(function(d){ return [d]; })
+      .transform(function(d){ return [state.data]; })
       .enter(function(p){
         var select = p.append('select').attr('class', name).attr('name',name);
         select.on('change', function(){
@@ -98,8 +97,7 @@
           })
         })
       .update(function(select){
-        select.datum(state.data);
-        optionHandler(select);
+        select.call(optionHandler);
         })
 
     menu.selected = function(){ return state.selected };
