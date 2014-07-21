@@ -156,7 +156,7 @@
       , state = {text: name, active: false, enter: noop, update: noop};
     state.fire = function(){
       state.active = ! state.active;
-      callbacks.forEach(function(cb){ cb.call(state, btn); });
+      callbacks.forEach(function(cb){ cb.call(btn, state.active); });
       }
     var btn = handler(select)
       .transform(function(d){ return [d]; })
