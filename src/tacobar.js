@@ -5,16 +5,10 @@
   var ident = function(i){ return i; }
   var fluentAccessor = function(thing, state, property){
     thing[property] = function(value){
-      if (value === void 0) { return state[property]; }
+      if (arguments.length === 0) { return state[property]; }
       state[property] = value;
       return thing; }
     };
-
-  function basicState(){
-    return { transform: ident, id: function(d, i) { return i; }
-            , enter: noop , update: noop , exit: remove
-            }
-    }
 
   function parseSelection(select) {
     var segments = select.split(/[\.#]/)
@@ -26,27 +20,27 @@
 
   var bar = {};
   var handler = bar.handler = function(select) {
-    var state = basicState();
+    var state = { transform: ident, id: function(d, i) { return i; }
+                , enter: noop , update: noop , exit: remove };
     state.container = '';
     function handler(selection) {
-      var rebind;
       selection.each(function(data){
-        var self = this;
+        var base, sel;
         data = state.transform(data);
         if (state.container) {
-          var cont = d3.select(self).selectAll(state.container).data([data]);
-          contDesc = parseSelection(state.container);
-          var container = cont.enter().append(contDesc[0]);
-          if (contDesc[1]) { container.attr('id', contDesc[1]); }
-          if (contDesc[2].length) { container.attr('class', contDesc[2].join(' ')); }
-          rebind = function() { return cont.selectAll(select).data(ident, state.id); };
+          var base = d3.select(this).selectAll(state.container).data([data])
+            , containerDesc = parseSelection(state.container);
+            , container = base.enter().append(containerDesc[0]);
+          if (containerDesc[1]) { container.attr('id', containerDesc[1]); }
+          if (containerDesc[2].length) { container.attr('class', containerDesc[2].join(' ')); }
+          sel = base.selectAll(select).data(ident, state.id);
         } else {
-          rebind = function () { return d3.select(self).selectAll(select).data(data, state.id); }
+          base = d3.select(this);
+          sel = base.selectAll(select).data(data, state.id);
         }
-        var bound = rebind();
-        state.exit.call(state, bound.exit());
-        state.enter.call(state, bound.enter());
-        state.update.call(state, rebind());
+        state.exit.call(state, sel.exit());
+        state.enter.call(state, sel.enter());
+        state.update.call(state, base.selectAll(select));
         });
       }
     Object.keys(state).forEach(function(key){ fluentAccessor(handler, state, key); });
