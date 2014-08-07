@@ -52,6 +52,7 @@
       , update: noop
       , axis: d3.svg.axis()
       , scale: d3.scale.linear()
+      , transition: null
       , left: 0
       , top: 0
       };
@@ -64,6 +65,10 @@
         })
       .update(function(g){
         state.axis.scale(state.scale);
+        if (state.transition) {
+          g = g.transition();
+          state.transition.call(state, g);
+        }
         g.call(state.axis)
         .attr('translate', 'transform(' + state.left +','+ state.top +')')
         state.update.call(state, g);
