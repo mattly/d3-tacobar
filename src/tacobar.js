@@ -29,7 +29,7 @@
         data = state.transform(data);
         if (state.container) {
           var base = d3.select(this).selectAll(state.container).data([data])
-            , containerDesc = parseSelection(state.container);
+            , containerDesc = parseSelection(state.container)
             , container = base.enter().append(containerDesc[0]);
           if (containerDesc[1]) { container.attr('id', containerDesc[1]); }
           if (containerDesc[2].length) { container.attr('class', containerDesc[2].join(' ')); }
